@@ -2,33 +2,21 @@
 #include "StringUtils.h"
 #include <algorithm>
 
-using Xml::Eventer;
+using Xml::Reactor;
 using cpputils::tstring;
 
-Eventer::Eventer(Xml::IParser &xp)
-    : xp(xp)
+Reactor::Reactor(Xml::IParser &xp, const tstring &enablingAttribute)
+    : Parser(xp), GlobalEnablingAttribute(enablingAttribute)
 { }
 
-void Eventer::AddEvent(const tstring &eventPath, EventHandler eh)
+void Reactor::AddEvent(const tstring &eventPath, EventHandler eh)
 {
     auto ep = StringUtils::Ltrim(eventPath); // left trimming is sufficient!
-    if (ep.empty()) throw "Empty xpath expression!";
+    if (ep.empty()) throw _T("Empty xpath expression!");
     handlerMap[ep].push_back(eh);
 }
 
-//template <class T> static const tstring GetXPath(T start, T end)
-//{
-//    if (start > end) throw _T("");
-//    tstring s;
-//    for (T it = start; it != end; ++it)
-//    {
-//        s.append(*it);
-//        if (it + 1 != end) s.append(_T("/"));
-//    }
-//    return s;
-//}
-
-const tstring Eventer::getCurrentPath()
+const tstring Reactor::getCurrentPath()
 {
     tstring s;
     const auto end = elementStack.cend();
@@ -39,7 +27,7 @@ const tstring Eventer::getCurrentPath()
     return s;
 }
 
-bool Eventer::xPathEquals(const tstring &eventPath)
+bool Reactor::xPathEquals(const tstring &eventPath)
 {
     StringUtils::Tokenizer ept(eventPath, _T("/"));
     StringUtils::Tokenizer cpt(getCurrentPath(), _T("/"));
@@ -59,49 +47,52 @@ bool Eventer::xPathEquals(const tstring &eventPath)
     return !cpt.NextToken();
 }
 
-void Eventer::callHandlers()
+void Reactor::callHandlersIfPathsMatch()
 {
+    { // localized block
+        tstring enabled;
+        if (elementStack.back().IsAttribute(GlobalEnablingAttribute, enabled) && enabled == _T("no")) return;
+    }
     const auto end = handlerMap.cend();
     for (auto it = handlerMap.cbegin(); it != end; ++it)
     {
         if (xPathEquals(it->first))
         {
-            Event e;
-            for (auto i = elementStack.size(); i > 0; --i)
-            {
-                e.AttributeMaps.push_back(
-            }
+            Event e(*this);
             std::for_each(it->second.begin(), it->second.end(), [&e](EventHandler eh) { eh(e); });
         }
     }
 }
 
-void Eventer::Run()
+void Reactor::Run(const bool runToEnd)
 {
-    while (xp.NextToken())
+    while (Parser.NextToken())
     {
-        switch (xp.GetToken().Type)
+        switch (Parser.GetToken().Type)
         {
         case START_TAG:
-            if (xp.GetToken().EndOfStartTag)
+            if (Parser.GetToken().EndOfStartTag)
             {
-                elementStack.push_back(ElementAttributes(xp.GetToken().Value, std::unique_ptr<map<tstring, tstring>>(new map<tstring, tstring>())));
+                elementStack.push_back(ElementAttributes(Parser.GetToken().Value, unique_ptr<AttributeMap>(new AttributeMap())));
             }
             else
             {
-                auto elem = xp.GetToken().Value;
-                if (xp.NextToken())
+                auto elemName = Parser.GetToken().Value;
+                if (Parser.NextToken()) // must be an attribute ..
                 {
-                    elementStack.push_back(ElementAttributes(elem, xp.GetToken().Attributify()));
+                    elementStack.push_back(ElementAttributes(elemName, Parser.GetToken().Attributify()));
                 }
             }
-            callHandlers();
+            callHandlersIfPathsMatch();
             break;
         case END_TAG:
-            if (elementStack.empty()) throw _T("Invalid XML!");
-            if (!xp.GetToken().Value.empty() && xp.GetToken().Value != elementStack.back().Name) throw _T("XML element has no closing tag!");
-            elementStack.pop_back();
+            if (!elementStack.empty())
+            {
+                elementStack.pop_back();
+            }
+            else if (!runToEnd) throw _T("Invalid XML!");
             break;
         }
     }
 }
+

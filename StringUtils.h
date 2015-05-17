@@ -45,13 +45,60 @@ namespace StringUtils
     {
         tstring source;
         const tstring delim;
-        tstring token;
+        tstring token, removedDelim;
 
     public:
+        const tstring &RemovedDelimiter;
         Tokenizer(const tstring &source, const tstring &delim)
-            : source(source), delim(delim)
+            : source(source), delim(delim), RemovedDelimiter(removedDelim)
         { }
         bool NextToken();
         const tstring &GetToken();
+        const tstring &WhatRemains()
+        {
+            return source;
+        }
+    };
+
+    class GroupTokenizer
+    {
+        Tokenizer toknzr;
+        const TCHAR toknGrpr;
+        tstring groupedToken;
+
+    public:
+        GroupTokenizer(const tstring &source, const tstring &delim, TCHAR tokenGrouper = _T('"'))
+            : toknzr(source, delim), toknGrpr(tokenGrouper)
+        { }
+
+        bool NextToken()
+        {
+            if (toknzr.NextToken())
+            {
+                auto &token = toknzr.GetToken();
+                auto i = token.find(toknGrpr);
+                if (i != tstring::npos)
+                {
+                    groupedToken = token.substr(i + 1) + toknzr.RemovedDelimiter;
+                    const auto &s = toknzr.WhatRemains();
+                    auto i = s.find(toknGrpr);
+                    groupedToken.append(s.substr(0, i));
+                    while (toknzr.NextToken() && toknzr.GetToken().find(toknGrpr) == tstring::npos)
+                        ;
+                }
+                else
+                {
+                    groupedToken = token;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        const tstring &GetToken()
+        {
+            return groupedToken;
+        }
     };
 }
+

@@ -14,3 +14,4 @@ namespace cpputils
 {
     typedef std::basic_string<TCHAR> tstring;
 }
+

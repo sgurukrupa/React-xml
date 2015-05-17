@@ -7,7 +7,8 @@
 namespace Xml
 {
     using cpputils::tstring;
-    using std::map;
+
+    typedef std::map<tstring, tstring> AttributeMap;
 
     class LIB_EXPORTS AttributeParser
     {
@@ -18,7 +19,7 @@ namespace Xml
         bool NextToken();
         tstring Key, Value;
 
-        static std::unique_ptr<const map<tstring, tstring>> Mapify(const tstring &attrToken)
+        static std::unique_ptr<AttributeMap> Mapify(const tstring &attrToken)
         {
             AttributeParser ap(attrToken);
             auto *pm = new std::map<tstring, tstring>();
@@ -26,7 +27,7 @@ namespace Xml
             {
                 (*pm)[ap.Key] = ap.Value;
             }
-            return std::unique_ptr<const map<tstring, tstring>>(pm);
+            return std::unique_ptr<AttributeMap>(pm);
         }
     };
 }

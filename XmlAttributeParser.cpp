@@ -31,3 +31,4 @@ bool AttributeParser::NextToken()
     attr.erase(0, i + 1);
     return true;
 }
+
