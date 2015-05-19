@@ -81,9 +81,11 @@ namespace Xml
         typedef void (*EventHandler)(Event);
         void AddEvent(const tstring &eventPath, EventHandler);
         void Run(bool runToEnd = false); // start capturing events
+        void AddPreHook(EventHandler);
 
     private:
         map<tstring, vector<EventHandler>> handlerMap;
+        vector<EventHandler> preHooks;
     };
 }
 

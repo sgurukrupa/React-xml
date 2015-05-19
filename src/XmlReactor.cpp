@@ -59,6 +59,7 @@ void Reactor::callHandlersIfPathsMatch()
         if (xPathEquals(it->first))
         {
             Event e(*this);
+            std::for_each(preHooks.cbegin(), preHooks.cend(), [&e](EventHandler eh) { eh(e); });
             std::for_each(it->second.begin(), it->second.end(), [&e](EventHandler eh) { eh(e); });
         }
     }
@@ -96,3 +97,7 @@ void Reactor::Run(const bool runToEnd)
     }
 }
 
+void Reactor::AddPreHook(EventHandler eh)
+{
+    preHooks.push_back(eh);
+}

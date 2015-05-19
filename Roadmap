@@ -1,0 +1,9 @@
+1. Add full unicode (wide character) support to Xml::Parser - ifstream -> wide version.
+2. Polish Xml::DOM api
+2.1. Make Xml::Parser object copyable. This will help in implementing Xml::Reactor::DomifySelf. Also there will be no need of SaveState and RestoreState methods in Xml::Parser
+2.2. Make a singly linked list for use in all cases where indexed access to a sequential container is not necessary.
+2.3. In Xml::Reactor::callHandlersIfPathsMatch, change all non-const iterators to const counterparts.
+3. EnablingAttribute in Xml::Reactor is slightly confusing in semantics. What happens when a parent element has EnablingAttribute set to 'no' when the EnablingAttribute for this element is set to 'yes'. Think of making the purport clearer.
+3.1. Normalize XPath expressions before adding to handlerMap in Xml::Reactor
+4. #pragma once will not work on gcc and clang. Make the parser portable by providing support to build on gcc, clang and mingw
+5. Support for other types of Xml tokens - CDATA, XML entities
