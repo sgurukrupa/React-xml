@@ -20,12 +20,12 @@ bool Parser::NextToken()
 
     auto startTagDone = false;
     auto insideString = false;
-    enum StringDelimiter : char { SINGLE_QUOTE = '\'', DOUBLE_QUOTE = '"' } stringDelim;
+    enum StringDelimiter : TCHAR { SINGLE_QUOTE = _T('\''), DOUBLE_QUOTE = _T('"') } stringDelim;
 
     TOKEN_TYPE toktype = tr.Type == START_TAG && !tr.EndOfStartTag ? ATTRIBUTE : BODY; // start TAG is kinda odd, it encapsulates another kind of token inside
     tstring tokenBuf;
-    auto addtok = [&tokenBuf](char ch) { tokenBuf.append(1, ch); };
-    for (char c; xmlfile.get(c);)
+    auto addtok = [&tokenBuf](TCHAR ch) { tokenBuf.append(1, ch); };
+    for (TCHAR c; xmlfile.get(c);)
     {
         if (c == '\n') ++lineNo;
         if (c == '<')
@@ -129,7 +129,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             case COMMENT:
-                char c2;
+                TCHAR c2;
                 if (xmlfile.get(c2) && c2 == '-')
                 {
                     if (!xmlfile.get(c2) || c2 != '>') throw _T("Invalid XML comment!");
@@ -183,7 +183,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             case INSTRUCTION:
-                char c2;
+                TCHAR c2;
                 if (xmlfile.get(c2) && c2 == '>')
                 {
                     tr.Value = tokenBuf;

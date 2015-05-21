@@ -114,7 +114,7 @@ namespace Xml
 
     class LIB_EXPORTS Parser : public IParser
     {
-        std::ifstream xmlfile;
+        cpputils::tifstream xmlfile;
         std::streampos cursor;
         TokenResult tr, savedTr;
         std::stack<tstring> startedTags, savedTags;
