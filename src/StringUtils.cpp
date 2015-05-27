@@ -17,15 +17,8 @@ namespace StringUtils
     {
         if (source.empty()) return false;
         auto ix = source.find_first_of(delim, 0);
-        if (ix == tstring::npos)
-        {
-            ix = source.length();
-            removedDelim.clear();
-        }
-        else
-        {
-            removedDelim = source.substr(ix, 1);
-        }
+        if (ix == tstring::npos) ix = source.length();
+        removedDelim = source.substr(ix, 1);
         token = source.substr(0, ix);
         source.erase(0, ix + 1); // erase the delimiter too
         return true;

@@ -41,6 +41,12 @@ namespace StringUtils
 
     tstring Format(const TCHAR * const fmt, ...);
 
+    inline tstring Substring(const tstring &str, tstring::size_type start, tstring::size_type end)
+    {
+        const tstring::difference_type n = end - start;
+        return n > 0 ? str.substr(start, n) : _T("");
+    }
+
     class Tokenizer
     {
         tstring source;
@@ -49,8 +55,8 @@ namespace StringUtils
 
     public:
         const tstring &RemovedDelimiter;
-        Tokenizer(const tstring &source, const tstring &delim)
-            : source(source), delim(delim), RemovedDelimiter(removedDelim)
+        Tokenizer(const tstring &source, const tstring &delimiters)
+            : source(source), delim(delimiters), RemovedDelimiter(removedDelim)
         { }
         bool NextToken();
         const tstring &GetToken();
@@ -58,33 +64,52 @@ namespace StringUtils
         {
             return source;
         }
+        void PutBack(const tstring &token)
+        {
+            source.insert(0, token);
+        }
     };
 
     class GroupTokenizer
     {
         Tokenizer toknzr;
-        const TCHAR toknGrpr;
-        tstring groupedToken;
+        std::pair<TCHAR, TCHAR> grprPair;
+        //std::map<TCHAR, TCHAR> toknGrprs;
+        tstring groupedToken, tokenBuffer;
 
     public:
-        GroupTokenizer(const tstring &source, const tstring &delim, TCHAR tokenGrouper = _T('"'))
-            : toknzr(source, delim), toknGrpr(tokenGrouper)
+        GroupTokenizer(const tstring &source, const tstring &delimiters, std::pair<TCHAR, TCHAR> grprPair)
+            : toknzr(source, delimiters), grprPair(grprPair)
         { }
 
         bool NextToken()
         {
-            if (toknzr.NextToken())
+            if (!tokenBuffer.empty())
+            {
+                tokenBuffer.clear();
+                return true;
+            }
+            else if (toknzr.NextToken())
             {
                 auto &token = toknzr.GetToken();
-                auto i = token.find(toknGrpr);
+                auto i = token.find(grprPair.first);
                 if (i != tstring::npos)
                 {
-                    groupedToken = token.substr(i + 1) + toknzr.RemovedDelimiter;
-                    const auto &s = toknzr.WhatRemains();
-                    auto i = s.find(toknGrpr);
-                    groupedToken.append(s.substr(0, i));
-                    while (toknzr.NextToken() && toknzr.GetToken().find(toknGrpr) == tstring::npos)
-                        ;
+                    tokenBuffer = token.substr(0, i); // save for later use
+                    auto j = token.find(grprPair.second, i + 1); // is the pairing character inside the token itself?
+                    if (j != tstring::npos)
+                    {
+                        groupedToken = Substring(token, i + 1, j);
+                    }
+                    else
+                    {
+                        groupedToken = token.substr(i + 1) + toknzr.RemovedDelimiter;
+                        const auto &s = toknzr.WhatRemains();
+                        j = s.find(grprPair.second);
+                        groupedToken.append(s.substr(0, j));
+                        while (toknzr.NextToken() && toknzr.GetToken().find(grprPair.second) == tstring::npos)
+                            ; // skip tokens till we reach the grouper character
+                    }
                 }
                 else
                 {
@@ -92,12 +117,15 @@ namespace StringUtils
                 }
                 return true;
             }
-            return false;
+            else
+            {
+                return false;
+            }
         }
 
         const tstring &GetToken()
         {
-            return groupedToken;
+            return !tokenBuffer.empty() ? tokenBuffer : groupedToken;
         }
     };
 }
