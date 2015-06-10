@@ -9,6 +9,7 @@
 #include "CppUtils.h"
 #include "XmlAttributeParser.h"
 #include "StringUtils.h"
+#include "XmlException.h"
 
 namespace Xml
 {
@@ -28,7 +29,7 @@ namespace Xml
         TokenResult() : Type(BODY), EndOfStartTag(false), NoBody(false) { }
         std::unique_ptr<AttributeMap> Attributify() const
         {
-            if (Type != ATTRIBUTE) throw Value; // error
+            if (Type != ATTRIBUTE) throw Exception("The current token is not an attribute."); // error
             return AttributeParser::Mapify(Value);
         }
     };
@@ -81,7 +82,7 @@ namespace Xml
         {
             if (!StringUtils::Ltrim(val).empty())
             {
-                if (!elementName.empty()) throw _T("A DOM node can only have a value or an element name not both!");
+                if (!elementName.empty()) throw Exception("A DOM node can only have a value or an element name not both!");
                 value = val;
             }
         }
@@ -96,7 +97,7 @@ namespace Xml
                 const auto &e = elements.back();
                 if (e->elementName.empty()) return e->value; // and that's a text node
             }
-            throw _T("This operation can be called only for a text node or a node whose ONLY child is a text node!");
+            throw Exception("This operation can be called only for a text node or a node whose ONLY child is a text node!");
         }
     };
 
@@ -106,7 +107,7 @@ namespace Xml
         virtual const TokenResult &GetToken() = 0;
         virtual const tstring &GetElement() = 0;
         virtual bool SkipToStartTag(bool notBeyondEndTag = true) = 0;
-        virtual bool SkipToEndTag() = 0;
+        virtual bool SkipToEndTag(bool matchStartTag = false) = 0;
         virtual unique_ptr<DOM> Domify(bool skipWhiteBody = true) = 0;
         virtual void SaveState() = 0;
         virtual void RestoreState() = 0;
@@ -127,14 +128,7 @@ namespace Xml
         const TokenResult &GetToken();
         const tstring &GetElement();
         bool SkipToStartTag(bool notBeyondEndTag = true);
-        bool SkipToEndTag()
-        {
-            while (NextToken())
-            {
-                if (GetToken().Type == END_TAG) return true;
-            }
-            return false;
-        }
+        bool SkipToEndTag(bool matchStartTag = false);
         unique_ptr<DOM> Domify(bool skipWhiteBody = true);
         void SaveState() { cursor = xmlfile.tellg(); savedTr = tr; savedLineNo = lineNo; savedTags = startedTags; }
         void RestoreState() { xmlfile.seekg(cursor); tr = savedTr; lineNo = savedLineNo; startedTags = savedTags; }

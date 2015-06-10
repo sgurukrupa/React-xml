@@ -49,7 +49,7 @@ namespace Xml
             const ElementAttributes &GetElement(int level)
             {
                 const auto len = Source.elementStack.size();
-                if (len == 0) throw _T("Element stack is empty!");
+                if (len == 0) throw Exception("Element stack is empty!");
                 return Source.elementStack.at(len - 1 - level);
             }
             const tstring &Attribute(const tstring &attrKey, int level = 0)

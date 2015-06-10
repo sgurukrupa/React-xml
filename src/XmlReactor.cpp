@@ -12,7 +12,7 @@ Reactor::Reactor(Xml::IParser &xp, const tstring &enablingAttribute)
 void Reactor::AddEvent(const tstring &eventPath, EventHandler eh)
 {
     auto ep = StringUtils::Ltrim(eventPath); // left trimming is sufficient!
-    if (ep.empty()) throw _T("Empty xpath expression!");
+    if (ep.empty()) throw Exception("Empty xpath expression!");
     handlerMap[ep].push_back(eh);
 }
 
@@ -91,7 +91,7 @@ void Reactor::Run(const bool runToEnd)
             {
                 elementStack.pop_back();
             }
-            else if (!runToEnd) throw _T("Invalid XML!");
+            else if (!runToEnd) throw Exception("Invalid XML!");
             break;
         }
     }
@@ -101,3 +101,4 @@ void Reactor::AddPreHook(EventHandler eh)
 {
     preHooks.push_back(eh);
 }
+

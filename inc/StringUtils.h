@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <queue>
 #include <cstdarg>
 #include "CppUtils.h"
 
@@ -50,13 +51,13 @@ namespace StringUtils
     class Tokenizer
     {
         tstring source;
-        const tstring delim;
+        tstring delimiters;
         tstring token, removedDelim;
 
     public:
         const tstring &RemovedDelimiter;
         Tokenizer(const tstring &source, const tstring &delimiters)
-            : source(source), delim(delimiters), RemovedDelimiter(removedDelim)
+            : source(source), delimiters(delimiters), RemovedDelimiter(removedDelim)
         { }
         bool NextToken();
         const tstring &GetToken();
@@ -68,6 +69,10 @@ namespace StringUtils
         {
             source.insert(0, token);
         }
+        void AddDelimiter(TCHAR c)
+        {
+            delimiters.push_back(c);
+        }
     };
 
     class GroupTokenizer
@@ -75,57 +80,51 @@ namespace StringUtils
         Tokenizer toknzr;
         std::pair<TCHAR, TCHAR> grprPair;
         //std::map<TCHAR, TCHAR> toknGrprs;
-        tstring groupedToken, tokenBuffer;
+        tstring groupedToken;
+        enum GRPSTATE { NOGRP, GRPSTART, INGRP, GRPEND } state;
+        bool isDelimiterGrp()
+        {
+            return toknzr.RemovedDelimiter == tstring(1, grprPair.first);
+        }
 
     public:
         GroupTokenizer(const tstring &source, const tstring &delimiters, std::pair<TCHAR, TCHAR> grprPair)
-            : toknzr(source, delimiters), grprPair(grprPair)
-        { }
+            : toknzr(source, delimiters), grprPair(grprPair), state(NOGRP)
+        {
+            toknzr.AddDelimiter(grprPair.first);
+        }
 
         bool NextToken()
         {
-            if (!tokenBuffer.empty())
-            {
-                tokenBuffer.clear();
-                return true;
-            }
-            else if (toknzr.NextToken())
+            while (toknzr.NextToken())
             {
                 auto &token = toknzr.GetToken();
-                auto i = token.find(grprPair.first);
-                if (i != tstring::npos)
+                switch (state)
                 {
-                    tokenBuffer = token.substr(0, i); // save for later use
-                    auto j = token.find(grprPair.second, i + 1); // is the pairing character inside the token itself?
-                    if (j != tstring::npos)
-                    {
-                        groupedToken = Substring(token, i + 1, j);
-                    }
-                    else
-                    {
-                        groupedToken = token.substr(i + 1) + toknzr.RemovedDelimiter;
-                        const auto &s = toknzr.WhatRemains();
-                        j = s.find(grprPair.second);
-                        groupedToken.append(s.substr(0, j));
-                        while (toknzr.NextToken() && toknzr.GetToken().find(grprPair.second) == tstring::npos)
-                            ; // skip tokens till we reach the grouper character
-                    }
-                }
-                else
-                {
+                case NOGRP:
+                case GRPEND:
                     groupedToken = token;
+                    if (isDelimiterGrp()) state = GRPSTART;
+                    return true;
+                case GRPSTART:
+                    groupedToken = token;
+                    state = isDelimiterGrp() ? GRPEND : INGRP;
+                    if (state == INGRP) groupedToken.append(toknzr.RemovedDelimiter);
+                    if (state == GRPEND) return true;
+                    break;
+                case INGRP:
+                    groupedToken.append(token);
+                    state = isDelimiterGrp() ? GRPEND : INGRP;
+                    if (state == INGRP) groupedToken.append(toknzr.RemovedDelimiter);
+                    if (state == GRPEND) return true;
                 }
-                return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         const tstring &GetToken()
         {
-            return !tokenBuffer.empty() ? tokenBuffer : groupedToken;
+            return groupedToken;
         }
     };
 }

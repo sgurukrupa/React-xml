@@ -33,7 +33,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             default:  // </hari><
-                throw _T("Encountered error while parsing XML."); // error
+                throw Exception("Encountered error while parsing XML."); // error
             case BODY:
                 if (!tokenBuf.empty())
                 {
@@ -42,16 +42,16 @@ bool Parser::NextToken()
                     xmlfile.unget();
                     return true;
                 }
-                if (!xmlfile.get(c) || isspace(c)) throw _T("Encountered error while parsing body."); // to determine if this is an END_TAG or START_TAG, read one more character from file
+                if (!xmlfile.get(c) || isspace(c)) throw Exception("Encountered error while parsing body."); // to determine if this is an END_TAG or START_TAG, read one more character from file
                 if (c == '/')
                 {
-                    if (!xmlfile.get(c) || isspace(c)) throw _T("Encountered error while parsing body."); // an XML error - a '</' must not be followed by spaces
+                    if (!xmlfile.get(c) || isspace(c)) throw Exception("Encountered error while parsing body."); // an XML error - a '</' must not be followed by spaces
                     toktype = END_TAG;
                     xmlfile.unget();
                 }
                 else if (c == '!')
                 {
-                    if (!xmlfile.get(c) || c != '-' || !xmlfile.get(c) || c != '-') throw _T("Invalid XML comment!");
+                    if (!xmlfile.get(c) || c != '-' || !xmlfile.get(c) || c != '-') throw Exception("Invalid XML comment!");
                     toktype = COMMENT;
                 }
                 else if (c == '?')
@@ -71,7 +71,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             case BODY:
-                throw _T("Encountered error while parsing body."); // error
+                throw Exception("Encountered error while parsing body."); // error
             case ATTRIBUTE:
                 if (insideString)
                 {
@@ -86,8 +86,8 @@ bool Parser::NextToken()
                 tr.Type = toktype;
                 return true;
             case END_TAG:
-                if (tokenBuf.empty()) throw _T("Empty end tag."); // end tag is empty
-                if (startedTags.top() != tokenBuf) throw _T("Start tag doesn't match end tag."); // end tag doens't match start Tag
+                if (tokenBuf.empty()) throw Exception("Empty end tag."); // end tag is empty
+                if (startedTags.top() != tokenBuf) throw Exception("Start tag doesn't match end tag."); // end tag doens't match start Tag
                 startedTags.pop();
                 tr.Value = tokenBuf;
                 tr.Type = toktype;
@@ -111,7 +111,7 @@ bool Parser::NextToken()
                     break;
                 }
             case START_TAG:
-                if (!xmlfile.get(c) || c != '>') throw _T("Encountered error while parsing start tag."); // error
+                if (!xmlfile.get(c) || c != '>') throw Exception("Encountered error while parsing start tag."); // error
                 if (toktype == START_TAG)
                 {
                     startedTags.push(tokenBuf);
@@ -121,7 +121,7 @@ bool Parser::NextToken()
                 tr.Type = toktype;
                 return true;
             case END_TAG:
-                throw _T("Encountered error while parsing end tag."); // error - </*/
+                throw Exception("Encountered error while parsing end tag."); // error - </*/
             }
         }
         else if (c == '-')
@@ -132,12 +132,12 @@ bool Parser::NextToken()
                 TCHAR c2;
                 if (xmlfile.get(c2) && c2 == '-')
                 {
-                    if (!xmlfile.get(c2) || c2 != '>') throw _T("Invalid XML comment!");
+                    if (!xmlfile.get(c2) || c2 != '>') throw Exception("Invalid XML comment!");
                     tr.Value = tokenBuf;
                     tr.Type = toktype;
                     return true;
                 }
-                else if (xmlfile.eof()) throw _T("Invalid XML comment!");
+                else if (xmlfile.eof()) throw Exception("Invalid XML comment!");
                 xmlfile.unget(); // unget c2
             default:
                 addtok(c);
@@ -155,7 +155,7 @@ bool Parser::NextToken()
                 addtok(c);
                 break;
             case END_TAG:
-                throw _T("Encountered error while parsing end tag."); // error no spaces allowed
+                throw Exception("Encountered error while parsing end tag."); // error no spaces allowed
                 break;
             }
         }
@@ -190,7 +190,7 @@ bool Parser::NextToken()
                     tr.Type = toktype;
                     return true;
                 }
-                else if (xmlfile.eof()) throw _T("Invalid XML processing instruction.");
+                else if (xmlfile.eof()) throw Exception("Invalid XML processing instruction.");
                 xmlfile.unget();
             default:
                 addtok(c);
@@ -227,7 +227,7 @@ const Xml::TokenResult &Parser::GetToken()
 
 const tstring &Parser::GetElement()
 {
-    if (startedTags.size() == 0) throw _T(""); // error
+    if (startedTags.size() == 0) throw Exception(""); // error
     return startedTags.top();
 }
 
@@ -242,6 +242,24 @@ bool Parser::SkipToStartTag(bool notBeyondEndTag)
             return true;
         case END_TAG:
             if (notBeyondEndTag && startedTags.size() < depth) return false;
+            break;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+bool Parser::SkipToEndTag(bool matchStartTag)
+{
+    const auto depth = startedTags.size();
+    while (NextToken())
+    {
+        switch (GetToken().Type)
+        {
+        case END_TAG:
+            if (!matchStartTag) return true;
+            if (startedTags.size() < depth) return true;
             break;
         default:
             break;
@@ -274,7 +292,7 @@ unique_ptr<Xml::DOM> Parser::Domify(bool skipWhiteBody)
             }
             break;
         case ATTRIBUTE:
-            if (!d) throw _T("DOM cannot start at an ATTRIBUTE");
+            if (!d) throw Exception("DOM cannot start at an ATTRIBUTE");
             d->Put(GetToken().Attributify());
             break;
         case BODY:
@@ -305,7 +323,7 @@ unique_ptr<Xml::DOM> Parser::Domify(bool skipWhiteBody)
             break;
         }
     }
-    throw _T("Invalid XML - unclosed tags!");
+    throw Exception("Invalid XML - unclosed tags!");
 }
 
 using Xml::DOM;

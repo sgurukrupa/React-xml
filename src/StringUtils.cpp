@@ -16,7 +16,7 @@ namespace StringUtils
     bool Tokenizer::NextToken()
     {
         if (source.empty()) return false;
-        auto ix = source.find_first_of(delim, 0);
+        auto ix = source.find_first_of(delimiters);
         if (ix == tstring::npos) ix = source.length();
         removedDelim = source.substr(ix, 1);
         token = source.substr(0, ix);
