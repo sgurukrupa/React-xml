@@ -53,7 +53,7 @@ namespace Xml
         }
         void Put(unique_ptr<AttributeMap> a) { attributes = std::move(a); }
         const tstring &GetElementName() { return elementName; }
-        bool IsElement(const tstring &name,  DOM *&pd); // deprecated, do not use
+        //bool IsElement(const tstring &name,  DOM *&pd); // deprecated, do not use
         DOM *GetElement(const tstring &name)
         {
             const auto end = elements.cend();
@@ -86,18 +86,19 @@ namespace Xml
                 value = val;
             }
         }
-        const tstring &GetValue()
+        tstring *GetValue()
         {
             if (elementName.empty()) // a text node
             {
-                return value;
+                return &value;
             }
             else if (elements.size() == 1) // a single child node
             {
                 const auto &e = elements.back();
-                if (e->elementName.empty()) return e->value; // and that's a text node
+                if (e->elementName.empty()) return &e->value; // and that's a text node
             }
-            throw Exception("This operation can be called only for a text node or a node whose ONLY child is a text node!");
+            //throw Exception("This operation can be called only for a text node or a node whose ONLY child is a text node!");
+            return nullptr;
         }
     };
 

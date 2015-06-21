@@ -327,6 +327,7 @@ unique_ptr<Xml::DOM> Parser::Domify(bool skipWhiteBody)
 }
 
 using Xml::DOM;
+/*
 bool DOM::IsElement(const tstring &name, DOM *&pd)
 {
     const auto end = elements.cend();
@@ -340,6 +341,7 @@ bool DOM::IsElement(const tstring &name, DOM *&pd)
     }
     return false;
 }
+*/
 
 std::vector<std::reference_wrapper<DOM>> DOM::AllElements()
 {
