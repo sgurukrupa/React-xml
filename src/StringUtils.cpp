@@ -2,17 +2,6 @@
 
 namespace StringUtils
 {
-    cpputils::tstring Format(const TCHAR * const fmt, ...)
-    {
-        va_list a;
-        va_start(a, fmt);
-        TCHAR buf[100];
-        bool done = false;
-        done = _vsntprintf(buf, sizeof buf, fmt, a) < sizeof buf;
-        va_end(a);
-        return done ? buf : _T("");
-    }
-
     bool Tokenizer::NextToken()
     {
         if (source.empty()) return false;

@@ -40,12 +40,42 @@ namespace StringUtils
         return s;
     }
 
-    tstring Format(const TCHAR * const fmt, ...);
+    template <class T> int Vsnprintf(T *buf, size_t n, const T *fmt, va_list);
+    template <> inline int Vsnprintf<char>(char *buf, size_t n, const char *fmt, va_list argptr)
+    {
+        return _vsnprintf(buf, n, fmt, argptr);
+    }
+    template <> inline int Vsnprintf<wchar_t>(wchar_t *buf, size_t n, const wchar_t *fmt, va_list argptr)
+    {
+        return _vsnwprintf(buf, n, fmt, argptr);
+    }
+
+    template<class TC> inline std::basic_string<TC> Format(const TC *const fmt, ...)
+    {
+        va_list a;
+        va_start(a, fmt);
+        TC buf[20];
+        auto result = Vsnprintf<TC>(buf, sizeof buf / sizeof *buf, fmt, a);
+        va_end(a);
+        return std::basic_string<TC>(buf, result != -1 ? result : sizeof buf / sizeof *buf);
+    }
 
     inline tstring Substring(const tstring &str, tstring::size_type start, tstring::size_type end)
     {
         const tstring::difference_type n = end - start;
         return n > 0 ? str.substr(start, n) : _T("");
+    }
+
+    inline tstring::size_type Replace(const tstring &str, tstring &in, const tstring &with, const tstring::size_type off = 0)
+    {
+        tstring::size_type ix;
+        bool firstPass = true;
+        const auto withSize = with.size();
+        while ((ix = in.find(str, firstPass ? off : ix + withSize)) != tstring::npos)
+        {
+            in.replace(ix, str.size(), with);
+        }
+        return ix;
     }
 
     class Tokenizer
