@@ -7,8 +7,6 @@
 #define LIB_EXPORTS
 #endif
 
-#define _UNICODE 1
-
 #include <tchar.h>
 #include <string>
 #include <fstream>

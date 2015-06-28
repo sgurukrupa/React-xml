@@ -271,7 +271,7 @@ bool Parser::SkipToEndTag(bool matchStartTag)
 using std::unique_ptr;
 unique_ptr<Xml::DOM> Parser::Domify(bool skipWhiteBody)
 {
-    DOM *root, *d = 0; // 'd' => The(D) insertion point
+    DOM *root, *d = nullptr; // 'd' => The(D) insertion point
     const auto startSize = startedTags.size();
     while (NextToken())
     {
