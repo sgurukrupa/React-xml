@@ -1,12 +1,14 @@
 #include "XmlAttributeParser.h"
+
+#include <utility>
 #include "StringUtils.h"
 #include "XmlException.h"
 
-using cpputils::tstring;
-using Xml::AttributeParser;
+using reactxml::cpputils::tstring;
+using reactxml::AttributeParser;
 
-AttributeParser::AttributeParser(const tstring& allattr)
-    : attr(allattr)
+AttributeParser::AttributeParser (tstring allattr)
+    : attr (std::move(allattr))
 { }
 
 bool AttributeParser::NextToken()
@@ -15,8 +17,8 @@ bool AttributeParser::NextToken()
     if (attr.empty()) return false;
     auto i = attr.find('=');
     if (i == tstring::npos) throw Exception("Invalid XML attribute");
-    Key = attr.substr(0, i);
-    attr = StringUtils::Ltrim(attr.substr(i + 1)); // it's valid if i == attr.size()
+    Key = StringUtils::Rtrim(attr.substr(0, i));
+    attr = StringUtils::Ltrim(attr.substr(i + 1)); // it's valid if i == attr.size(), Haribol ..
     if (attr.empty()) throw Exception("Invalid XML attribute");
     if (attr[0] == '"')
     {

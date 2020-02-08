@@ -4,18 +4,18 @@
 #include <memory>
 #include "CppUtils.h"
 
-namespace Xml
+namespace reactxml
 {
     using cpputils::tstring;
 
-    typedef std::map<tstring, tstring> AttributeMap;
+    using AttributeMap = std::map<tstring, tstring>;
 
     class LIB_EXPORTS AttributeParser
     {
         tstring attr;
 
     public:
-        AttributeParser(const tstring& attrToken);
+        AttributeParser (tstring attrToken);
         bool NextToken();
         tstring Key, Value;
 

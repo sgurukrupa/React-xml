@@ -1,12 +1,17 @@
 #include "XmlParser.h"
 #include "XmlAttributeParser.h"
 
-using cpputils::tstring;
-using Xml::Parser;
+using reactxml::cpputils::tstring;
+using reactxml::Parser;
 
 Parser::Parser(const tstring &fn)
-    : xmlfile(fn), cursor(xmlfile.tellg()), tr(), savedTr(), lineNo(1), savedLineNo(1), LineNo(lineNo)
-{ }
+    : xmlfile(fn), cursor(xmlfile.tellg()), lineNo(1), savedLineNo(1), LineNo(lineNo)
+{
+  if (!xmlfile)
+  {
+    throw std::invalid_argument("Failed to open XML file:" + fn);
+  }
+}
 
 bool Parser::NextToken()
 {
@@ -22,7 +27,7 @@ bool Parser::NextToken()
     auto insideString = false;
     enum StringDelimiter : TCHAR { SINGLE_QUOTE = _T('\''), DOUBLE_QUOTE = _T('"') } stringDelim;
 
-    TOKEN_TYPE toktype = tr.Type == START_TAG && !tr.EndOfStartTag ? ATTRIBUTE : BODY; // start TAG is kinda odd, it encapsulates another kind of token inside
+    TOKEN_TYPE toktype = tr.Type == START_TAG && !tr.EndOfStartTag ? ATTRIBUTE : BODY; // start TAG is kinda odd, it encapsulates another kind of token inside, Haribol
     tstring tokenBuf;
     auto addtok = [&tokenBuf](TCHAR ch) { tokenBuf.append(1, ch); };
     for (TCHAR c; xmlfile.get(c);)
@@ -33,7 +38,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             default:  // </hari><
-                throw Exception("Encountered error while parsing XML."); // error
+                throw Exception("Encountered error while parsing XML."); // error, Haribol
             case BODY:
                 if (!tokenBuf.empty())
                 {
@@ -42,16 +47,16 @@ bool Parser::NextToken()
                     xmlfile.unget();
                     return true;
                 }
-                if (!xmlfile.get(c) || isspace(c)) throw Exception("Encountered error while parsing body."); // to determine if this is an END_TAG or START_TAG, read one more character from file
+                if (!xmlfile.get(c) || isspace(c)) throw Exception("Encountered error while parsing body."); // to determine if this is an END_TAG or START_TAG, read one more character from file, Haribol
                 if (c == '/')
                 {
-                    if (!xmlfile.get(c) || isspace(c)) throw Exception("Encountered error while parsing body."); // an XML error - a '</' must not be followed by spaces
+                    if (!xmlfile.get(c) || isspace(c)) throw Exception("Encountered error while parsing body."); // an XML error - a '</' must not be followed by spaces, Haribol
                     toktype = END_TAG;
                     xmlfile.unget();
                 }
                 else if (c == '!')
                 {
-                    if (!xmlfile.get(c) || c != '-' || !xmlfile.get(c) || c != '-') throw Exception("Invalid XML comment!");
+                    if (!xmlfile.get(c) || c != '-' || !xmlfile.get(c) || c != '-') throw Exception("Invalid XML comment!"); // -V501 - PVS-Studio, Haribol ..
                     toktype = COMMENT;
                 }
                 else if (c == '?')
@@ -71,7 +76,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             case BODY:
-                throw Exception("Encountered error while parsing body."); // error
+                throw Exception("Encountered error while parsing body."); // error, Haribol
             case ATTRIBUTE:
                 if (insideString)
                 {
@@ -86,8 +91,8 @@ bool Parser::NextToken()
                 tr.Type = toktype;
                 return true;
             case END_TAG:
-                if (tokenBuf.empty()) throw Exception("Empty end tag."); // end tag is empty
-                if (startedTags.top() != tokenBuf) throw Exception("Start tag doesn't match end tag."); // end tag doens't match start Tag
+                if (tokenBuf.empty()) throw Exception("Empty end tag."); // end tag is empty, Haribol
+                if (startedTags.top() != tokenBuf) throw Exception("Start tag doesn't match end tag."); // end tag doens't match start Tag, Haribol
                 startedTags.pop();
                 tr.Value = tokenBuf;
                 tr.Type = toktype;
@@ -111,7 +116,7 @@ bool Parser::NextToken()
                     break;
                 }
             case START_TAG:
-                if (!xmlfile.get(c) || c != '>') throw Exception("Encountered error while parsing start tag."); // error
+                if (!xmlfile.get(c) || c != '>') throw Exception("Encountered error while parsing start tag."); // error, Haribol
                 if (toktype == START_TAG)
                 {
                     startedTags.push(tokenBuf);
@@ -121,7 +126,7 @@ bool Parser::NextToken()
                 tr.Type = toktype;
                 return true;
             case END_TAG:
-                throw Exception("Encountered error while parsing end tag."); // error - </*/
+                throw Exception("Encountered error while parsing end tag."); // error - </*/, Haribol
             }
         }
         else if (c == '-')
@@ -137,8 +142,10 @@ bool Parser::NextToken()
                     tr.Type = toktype;
                     return true;
                 }
-                else if (xmlfile.eof()) throw Exception("Invalid XML comment!");
-                xmlfile.unget(); // unget c2
+
+                if (xmlfile.eof()) throw Exception("Invalid XML comment!");
+                xmlfile.unget(); // unget c2, Haribol
+
             default:
                 addtok(c);
                 break;
@@ -149,13 +156,13 @@ bool Parser::NextToken()
             switch (toktype)
             {
             case START_TAG:
-                startTagDone = true; // waiting for the attributes to follow ..
+                startTagDone = true; // waiting for the attributes to follow, Haribol ..
                 break;
             default:
                 addtok(c);
                 break;
             case END_TAG:
-                throw Exception("Encountered error while parsing end tag."); // error no spaces allowed
+                throw Exception("Encountered error while parsing end tag."); // error no spaces allowed, Haribol
                 break;
             }
         }
@@ -190,7 +197,8 @@ bool Parser::NextToken()
                     tr.Type = toktype;
                     return true;
                 }
-                else if (xmlfile.eof()) throw Exception("Invalid XML processing instruction.");
+
+                if (xmlfile.eof()) throw Exception("Invalid XML processing instruction.");
                 xmlfile.unget();
             default:
                 addtok(c);
@@ -202,7 +210,7 @@ bool Parser::NextToken()
             switch (toktype)
             {
             case START_TAG:
-                if (startTagDone) // oops! bumped into attributes ..
+                if (startTagDone) // oops! bumped into attributes, Haribol ..
                 {
                     startedTags.push(tokenBuf);
                     tr.NoBody = tr.EndOfStartTag = false;
@@ -216,18 +224,18 @@ bool Parser::NextToken()
                 break;
             }
         }
-    } // end for
+    } // end for, Haribol
     return false;
 }
 
-const Xml::TokenResult &Parser::GetToken()
+const reactxml::TokenResult &Parser::GetToken()
 {
     return tr;
 }
 
 const tstring &Parser::GetElement()
 {
-    if (startedTags.size() == 0) throw Exception(""); // error
+    if (startedTags.empty()) throw Exception(""); // error, Haribol
     return startedTags.top();
 }
 
@@ -269,64 +277,74 @@ bool Parser::SkipToEndTag(bool matchStartTag)
 }
 
 using std::unique_ptr;
-unique_ptr<Xml::DOM> Parser::Domify(bool skipWhiteBody)
+unique_ptr<reactxml::DOM> Parser::Domify(bool skipWhiteBody)
 {
-    DOM *root, *d = nullptr; // 'd' => The(D) insertion point
-    const auto startSize = startedTags.size();
-    while (NextToken())
-    {
-        switch (GetToken().Type)
-        {
-        case START_TAG:
-            { // localize block
-                auto p = new DOM(GetToken().Value);
-                if (startedTags.size() == startSize + 1)
-                {
-                    root = d = p; // the beginning of creation ..!
-                }
-                else // must be greater (cannot be smaller)
-                {
-                    d->Add(unique_ptr<DOM>(p));
-                    d = p; // the next insertion point
-                }
-            }
-            break;
-        case ATTRIBUTE:
-            if (!d) throw Exception("DOM cannot start at an ATTRIBUTE");
-            d->Put(GetToken().Attributify());
-            break;
-        case BODY:
-            if (startedTags.size() > startSize) // skip the beginning BODY or trailing BODY
-            {
-                auto &val = GetToken().Value;
-                if (StringUtils::Ltrim(val).empty() && skipWhiteBody) break;
-                auto p = new DOM();
-                p->SetValue(GetToken().Value);
-                d->Add(unique_ptr<DOM>(p));
-            }
-            break;
-        case END_TAG:
-            if (startedTags.size() < startSize) // only possible when the parser is positioned on and END tag when Domify was called
-            {
-                return unique_ptr<DOM>();
-            }
-            if (startedTags.size() == startSize)
-            {
-                return unique_ptr<DOM>(root);
-            }
-            else
-            {
-                d = d->Parent;
-            }
-            break;
-        default:
-            break;
-        }
-    }
+  std::unique_ptr<DOM> root;
+  DOM *d = nullptr; // 'd' => The(D) insertion point, Haribol
+  const auto startSize = startedTags.size();
+  while (NextToken())
+  {
+      switch (GetToken().Type)
+      {
+      case START_TAG:
+          { // localize block, Haribol
+              auto p = std::make_unique<DOM>(GetToken().Value);
+              if (startedTags.size() == startSize + 1)
+              {
+                  root = std::move(p); // the beginning of creation, Haribol ..!
+                  d = root.get();
+              }
+              else // must be greater (cannot be smaller), Haribol ..
+              {
+                  const auto nd = p.get(); // 'nd' => next 'D' ..
+                  assert(d);
+                  d->insert(std::move(p)); // -V522 - PVS-Studio
+                  d = nd; // the next insertion point, Haribol ..
+              }
+          }
+          break;
+      case ATTRIBUTE:
+          if (!d) throw Exception("DOM cannot start at an ATTRIBUTE");
+          d->Put(GetToken().Attributify());
+          break;
+      case BODY:
+          if (startedTags.size() > startSize) // skip the beginning BODY or trailing BODY, Haribol
+          {
+              auto &val = GetToken().Value;
+              if (StringUtils::Ltrim(val).empty() && skipWhiteBody) break;
+              d->setValue(GetToken().Value);
+          }
+          break;
+      case END_TAG:
+          if (startedTags.size() < startSize) // only possible when the parser is positioned on and END tag when Domify was called, Haribol
+          {
+              return unique_ptr<DOM>();
+          }
+
+          if (startedTags.size() == startSize)
+          {
+              return root;
+          }
+
+          d = d->getParent();
+          break;
+
+      default:
+          break;
+      }
+  }
+
+  if (xmlfile.eof())
+  {
     throw Exception("Invalid XML - unclosed tags!");
+  }
+  else
+  {
+    throw Exception("Failed to read XML file!");
+  }
 }
 
-using Xml::DOM;
+using reactxml::DOM;
 /*
 bool DOM::IsElement(const tstring &name, DOM *&pd)
 {
@@ -351,7 +369,7 @@ std::vector<std::reference_wrapper<DOM>> DOM::AllElements()
     return v;
 }
 
-Parser::~Parser(void)
+Parser::~Parser()
 {
     xmlfile.close();
 }

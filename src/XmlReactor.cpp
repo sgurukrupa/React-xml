@@ -2,10 +2,10 @@
 #include "StringUtils.h"
 #include <algorithm>
 
-using Xml::Reactor;
-using cpputils::tstring;
+using reactxml::cpputils::tstring;
+using reactxml::Reactor;
 
-Reactor::Reactor(Xml::IParser &xp, const tstring &enablingAttribute)
+Reactor::Reactor(reactxml::IParser &xp, const tstring &enablingAttribute)
     : Parser(xp), GlobalEnablingAttribute(enablingAttribute)
 { }
 

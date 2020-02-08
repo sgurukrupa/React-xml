@@ -1,14 +1,15 @@
 #pragma once
 #include <string>
 
-namespace Xml
+namespace reactxml
 {
     class Exception : public std::exception
     {
         std::string reason;
     public:
-        Exception(const std::string &reason) : reason(reason) { }
-        const char *what() const
+        Exception (std::string reason) : reason (std::move(reason)) { }
+
+        const char *what() const noexcept override
         {
             return reason.c_str();
         }

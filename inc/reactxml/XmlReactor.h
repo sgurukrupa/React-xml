@@ -6,7 +6,7 @@
 #include <map>
 #include <memory>
 
-namespace Xml
+namespace reactxml
 {
     using cpputils::tstring;
     using std::vector;
@@ -80,7 +80,7 @@ namespace Xml
         Reactor(IParser &xp, const tstring &enablingAttribute = _T("enabled"));
         typedef void (*EventHandler)(Event);
         void AddEvent(const tstring &eventPath, EventHandler);
-        void Run(bool runToEnd = false); // start capturing events
+        void Run(bool runToEnd = false); // start capturing events, Haribol
         void AddPreHook(EventHandler);
 
     private:
